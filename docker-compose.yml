@@ -1,0 +1,30 @@
+services:
+  storage:
+    image: postgis/postgis:${POSTGIS_VERSION:-latest}
+    volumes:
+      - { type: volume, source: postgis_data, target: /var/lib/postgresql/data }
+      - { type: bind, source: "storage/etc/postgres.init.d", target: /docker-entrypoint-initdb.d }
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres -q || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+    networks:
+      default:
+        aliases:
+          - ${POSTGRES_ALIAS:-storage}
+
+volumes:
+    postgis_data:
+        driver: local
+
+networks:
+  default:
+    ipam:
+      driver: default
+      # config:
+      #   - subnet: ${SUBNET:-}
